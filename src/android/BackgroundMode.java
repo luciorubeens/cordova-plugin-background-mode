@@ -57,6 +57,12 @@ public class BackgroundMode extends CordovaPlugin {
     // Flag indicates if the service is bind
     private boolean isBind = false;
 
+    // Flag indicates if wakeUp() is enabled/supported
+    public boolean enableWakeUp = false;
+
+    // Flag indicates if unlock() is enabled/supported
+    public boolean enableUnlock = false;
+
     // Default settings for the notification
     private static JSONObject defaultSettings = new JSONObject();
 
@@ -76,11 +82,6 @@ public class BackgroundMode extends CordovaPlugin {
             fireEvent(Event.FAILURE, "'service disconnected'");
         }
     };
-
-    @Override
-    protected void pluginInitialize() {
-        BackgroundExt.addWindowFlags(cordova.getActivity());
-    }
 
     // codebeat:disable[ABC]
 
@@ -116,6 +117,17 @@ public class BackgroundMode extends CordovaPlugin {
             disableMode();
             callback.success();
             return true;
+        }
+
+        else if (action.equalsIgnoreCase("enablewakeup")) {
+            this.enableWakeUp = true;//TODO support disabling
+            BackgroundExt.execute(this, "addwindowflags", callback);
+            return true;
+        }
+        else if (action.equalsIgnoreCase("enableunlock")) {
+          this.enableUnlock = true;//TODO support disabling
+          BackgroundExt.execute(this, "addwindowflags", callback);
+          return true;
         }
 
         BackgroundExt.execute(this, action, callback);

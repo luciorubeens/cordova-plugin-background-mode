@@ -239,6 +239,28 @@ exports.unlock = function() {
 };
 
 /**
+ * Enable Wake up feature.
+ *
+ * @return [ Void ]
+ */
+exports.enableWakeUp = function() {
+    if (this._isAndroid) {
+        cordova.exec(null, null, 'BackgroundMode', 'enablewakeup', []);
+    }
+};
+
+/**
+ * Enable unlock feature.
+ *
+ * @return [ Void ]
+ */
+exports.enableUnlock = function() {
+    if (this._isAndroid) {
+        cordova.exec(null, null, 'BackgroundMode', 'enableunlock', []);
+    }
+};
+
+/**
  * If the mode is enabled or disabled.
  *
  * @return [ Boolean ]
