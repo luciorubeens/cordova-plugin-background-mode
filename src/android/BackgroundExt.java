@@ -308,7 +308,7 @@ class BackgroundExt {
             return;
         }
 
-        final Activity app = plugin.cordova.getActivity();
+        final Activity app = getApp();
         final Window window = app.getWindow();
 
         app.runOnUiThread(new Runnable() {
