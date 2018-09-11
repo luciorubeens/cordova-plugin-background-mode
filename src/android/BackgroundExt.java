@@ -57,6 +57,9 @@ class BackgroundExt {
     // Weak reference to the cordova web view passed by the plugin
     private final WeakReference<CordovaWebView> webView;
 
+    // Weak reference to the cordova plugin
+    private final WeakReference<BackgroundMode> plugin;
+
     private PowerManager.WakeLock wakeLock;
 
     /**
@@ -64,9 +67,10 @@ class BackgroundExt {
      *
      * @param plugin The cordova plugin.
      */
-    private BackgroundExt(CordovaPlugin plugin) {
+    private BackgroundExt(BackgroundMode plugin) {
         this.cordova = new WeakReference<CordovaInterface>(plugin.cordova);
         this.webView = new WeakReference<CordovaWebView>(plugin.webView);
+        this.plugin = new WeakReference<BackgroundMode>(plugin);
     }
 
     /**
@@ -78,7 +82,7 @@ class BackgroundExt {
      *                 calling back into JavaScript.
      */
     @SuppressWarnings("UnusedParameters")
-    static void execute (CordovaPlugin plugin, final String action,
+    static void execute (BackgroundMode plugin, final String action,
                          final CallbackContext callback) {
 
         final BackgroundExt ext = new BackgroundExt(plugin);
@@ -106,29 +110,34 @@ class BackgroundExt {
             disableWebViewOptimizations();
         }
 
-        if (action.equalsIgnoreCase("background")) {
+        else if (action.equalsIgnoreCase("background")) {
             moveToBackground();
         }
 
-        if (action.equalsIgnoreCase("foreground")) {
+        else if (action.equalsIgnoreCase("foreground")) {
             moveToForeground();
         }
 
-        if (action.equalsIgnoreCase("tasklist")) {
+        else if (action.equalsIgnoreCase("tasklist")) {
             excludeFromTaskList();
         }
 
-        if (action.equalsIgnoreCase("dimmed")) {
+        else if (action.equalsIgnoreCase("dimmed")) {
             isDimmed(callback);
         }
 
-        if (action.equalsIgnoreCase("wakeup")) {
+        else if (action.equalsIgnoreCase("wakeup")) {
             wakeup();
         }
 
-        if (action.equalsIgnoreCase("unlock")) {
+        else if (action.equalsIgnoreCase("unlock")) {
             wakeup();
             unlock();
+        }
+
+        else if (action.equalsIgnoreCase("addwindowflags")) {//TODO change to "updateWindowFlags" -> i.e. also unset flags if necessary
+            addWindowFlags();
+            callback.success();
         }
     }
 
@@ -284,17 +293,36 @@ class BackgroundExt {
     /**
      * Add required flags to the window to unlock/wakeup the device.
      */
-    static void addWindowFlags(Activity app) {
+    private void addWindowFlags() {//TODO change to "updateWindowFlags" -> i.e. also unset flags if necessary
+
+        final BackgroundMode plugin = this.plugin.get();
+        if(plugin == null){
+          return;
+        }
+
+        final boolean wakeUpEnabled = plugin.enableWakeUp;
+        final boolean unlockEnabled = plugin.enableUnlock;
+
+        if(!wakeUpEnabled && !unlockEnabled){
+            //TODO support un-setting corresponding window-flags, if they have been set
+            return;
+        }
+
+        final Activity app = getApp();
         final Window window = app.getWindow();
 
         app.runOnUiThread(new Runnable() {
             public void run() {
-                window.addFlags(
-                        FLAG_ALLOW_LOCK_WHILE_SCREEN_ON |
+                int flags;
+                if(unlockEnabled){
+                    flags = FLAG_ALLOW_LOCK_WHILE_SCREEN_ON |
                         FLAG_SHOW_WHEN_LOCKED |
                         FLAG_TURN_SCREEN_ON |
-                        FLAG_DISMISS_KEYGUARD
-                );
+                        FLAG_DISMISS_KEYGUARD;
+                } else {
+                    flags = FLAG_TURN_SCREEN_ON;
+                }
+                window.addFlags(flags);
             }
         });
     }
